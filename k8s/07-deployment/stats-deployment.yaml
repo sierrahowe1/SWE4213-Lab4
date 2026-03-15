@@ -1,0 +1,55 @@
+# Part 7 — Deployment (stats-service)
+#
+# Same pattern as api-deployment.yaml. Fill in every ???.
+#
+# The stats-service is stateless (all data lives in Postgres), so it is
+# safe to run multiple replicas. However, for this lab start with 1 —
+# the HPA in Part 8 only targets the api Deployment.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stats-service
+spec:
+  replicas: ???
+  selector:
+    matchLabels:
+      app: ???
+  template:
+    metadata:
+      labels:
+        app: ???
+    spec:
+      containers:
+        - name: stats-service
+          image: stats-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4000
+          env:
+            - name: PORT
+              value: "4000"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DATABASE_URL
+          livenessProbe:
+            httpGet:
+              path: ???   # Which endpoint reports health?
+              port: ???
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: ???
+              port: ???
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"

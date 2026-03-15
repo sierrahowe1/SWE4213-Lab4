@@ -1,0 +1,19 @@
+# Provided — PersistentVolumeClaim for the Postgres database.
+#
+# A PVC is a request for storage. Kubernetes finds a PersistentVolume (PV)
+# that satisfies the request and binds them together. On Docker Desktop and
+# minikube, a PV is provisioned automatically (dynamic provisioning).
+#
+# accessModes: ReadWriteOnce means only one node can mount this volume
+# at a time — appropriate for a single-instance database.
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

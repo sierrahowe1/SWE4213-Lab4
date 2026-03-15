@@ -1,0 +1,29 @@
+# Part 2 — Pod
+#
+# A Pod is the smallest deployable unit in Kubernetes.
+# Fill in every ??? below, then apply with:
+#   kubectl apply -f k8s/02-pod/api-pod.yaml
+#
+# Verify with:
+#   kubectl get pods
+#   kubectl logs api
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api
+  labels:
+    app: ???        # Give the Pod a label. You will need this in Part 3 to
+                    # connect a Service to this Pod via a selector.
+spec:
+  containers:
+    - name: api
+      image: ???    # The image you built: docker build -t api:latest ./api
+      imagePullPolicy: Never
+      ports:
+        - containerPort: ???   # What port does the API listen on? Check api/src/index.js.
+      env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:secret@postgres:5432/notesdb"
+        - name: PORT
+          value: "3000"

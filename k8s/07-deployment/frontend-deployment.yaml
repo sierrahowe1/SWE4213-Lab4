@@ -1,0 +1,38 @@
+# Part 7 — Deployment (frontend)
+#
+# The frontend is a static HTML file served by nginx. It has no environment
+# variables, no secrets, and no database — fill in the structural fields only.
+#
+# IMPORTANT: The frontend calls the api at http://localhost:30000 (set via
+# VITE_API_URL in App.jsx). This works because the browser runs on your machine
+# and localhost:30000 reaches the api NodePort. If you used a different nodePort
+# for the api service in Part 3, update VITE_API_URL in frontend/src/App.jsx
+# and rebuild the image:
+#   docker build -t frontend:latest ./frontend
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ???
+  template:
+    metadata:
+      labels:
+        app: ???
+    spec:
+      containers:
+        - name: frontend
+          image: frontend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: ???   # what port does the frontend container expose? Check the Dockerfile.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4173
+            initialDelaySeconds: 5
+            periodSeconds: 10

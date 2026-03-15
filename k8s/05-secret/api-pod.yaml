@@ -1,0 +1,42 @@
+# Part 5 — Pod updated to consume Secrets
+#
+# DATABASE_URL is no longer hardcoded in the manifest. It is pulled from the
+# postgres-secret using secretKeyRef. The API_KEY comes from api-secret.
+#
+# secretKeyRef lets you reference a specific key from a named Secret,
+# rather than injecting every key (which is what secretRef in envFrom does).
+#
+# Fill in every ??? below, then apply:
+#   kubectl delete pod api
+#   kubectl apply -f k8s/05-secret/api-pod.yaml
+#
+# Verify the API still starts:
+#   kubectl logs api
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api
+  labels:
+    app: api
+spec:
+  containers:
+    - name: api
+      image: api:latest
+      imagePullPolicy: Never
+      ports:
+        - containerPort: 3000
+      envFrom:
+        - configMapRef:
+            name: api-config
+      env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ???   # Which Secret contains DATABASE_URL?
+              key: ???    # What is the exact key name inside that Secret?
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ???   # Which Secret contains API_KEY?
+              key: ???    # What is the exact key name inside that Secret?

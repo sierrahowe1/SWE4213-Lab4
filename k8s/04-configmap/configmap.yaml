@@ -1,0 +1,23 @@
+# Part 4 — ConfigMap
+#
+# A ConfigMap stores non-sensitive configuration as key-value pairs,
+# decoupled from the container image and Pod spec.
+#
+# Notice STATS_SERVICE_URL — in Kubernetes, any Service is reachable from
+# inside the cluster at http://<service-name>:<port>. This works because
+# Kubernetes runs a DNS server (CoreDNS) that resolves Service names
+# automatically. The value "http://stats-service:4000" will resolve to
+# the ClusterIP of the stats-service Service you created in Part 3.
+#
+# Fill in the ??? values, then apply:
+#   kubectl apply -f k8s/04-configmap/configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+data:
+  PORT: "???"              # What port should the API listen on?
+  LOG_LEVEL: "???"         # Try "info".
+  STATS_SERVICE_URL: "???" # How do you reach stats-service from inside the cluster?
+                           # Format: http://<service-name>:<port>

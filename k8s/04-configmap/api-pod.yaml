@@ -1,0 +1,32 @@
+# Part 4 — api Pod updated to consume the ConfigMap
+#
+# envFrom injects every key in the ConfigMap as an environment variable.
+# PORT, LOG_LEVEL, and STATS_SERVICE_URL are all injected automatically.
+#
+# Fill in the ??? and apply:
+#   kubectl delete pod api
+#   kubectl apply -f k8s/04-configmap/configmap.yaml
+#   kubectl apply -f k8s/04-configmap/api-pod.yaml
+#
+# Verify STATS_SERVICE_URL was picked up — test the proxied stats endpoint:
+#   curl http://localhost:<your-api-nodePort>/stats
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api
+  labels:
+    app: api
+spec:
+  containers:
+    - name: api
+      image: api:latest
+      imagePullPolicy: Never
+      ports:
+        - containerPort: 3000
+      env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:secret@postgres:5432/notesdb"
+      envFrom:
+        - configMapRef:
+            name: ???   # Name of your ConfigMap.

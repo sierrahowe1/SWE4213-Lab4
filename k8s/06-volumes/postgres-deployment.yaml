@@ -1,0 +1,49 @@
+# Provided — Postgres Deployment backed by a PersistentVolumeClaim.
+#
+# Compare this to k8s/postgres-pod.yaml:
+#   - The Deployment controller ensures a postgres pod is always running.
+#   - The volumeMount + PVC means data is written to persistent storage,
+#     not the container filesystem. Deleting the pod does NOT delete the data.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

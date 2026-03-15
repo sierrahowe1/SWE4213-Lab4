@@ -1,0 +1,19 @@
+# Part 7 — Service (frontend)
+#
+# The frontend needs to be reachable from your browser, so it needs a NodePort.
+# Fill in every ???, then open http://localhost:<your-nodePort> in a browser.
+#
+# Use a different nodePort than the api service (e.g. 30001).
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: ???
+  type: NodePort
+  ports:
+    - port: 4173
+      targetPort: ???   # Port the frontend container listens on. Check the Dockerfile.
+      nodePort: ???     # Port on your machine (30000–32767, different from api).

@@ -1,0 +1,30 @@
+# Part 3 — Service (stats-service)
+#
+# This service should NOT be reachable from your browser.
+# Only the api pod needs to call it, from inside the cluster.
+#
+# Look at the Service type table in LAB.md.
+# Which type exposes a service only inside the cluster?
+#
+# Fill in every ??? and apply:
+#   kubectl apply -f k8s/03-service/stats-service.yaml
+#
+# Test internal reachability (from inside the api pod):
+#   kubectl exec -it api -- sh
+#   wget -qO- http://stats-service:4000/health
+#
+# Confirm it is NOT reachable from your machine:
+#   curl http://localhost:4000/stats   # should fail or time out
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: stats-service
+spec:
+  selector:
+    app: ???    # Must match the label on the stats-service Pod.
+  type: ???     # Which type makes this reachable only inside the cluster?
+  ports:
+    - port: ???         # Port the Service listens on inside the cluster.
+      targetPort: ???   # Port on the Pod.
+      # NOTE: No nodePort field — that field only applies to NodePort services.

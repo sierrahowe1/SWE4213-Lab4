@@ -1,0 +1,37 @@
+# Provided — a bare postgres Pod and its ClusterIP Service.
+# Used in Parts 2–5 before the PVC-backed Deployment is introduced in Part 6.
+#
+# NOTE: This Pod has NO PersistentVolumeClaim. Data written to it is stored
+# inside the container's filesystem and will be lost if the pod is deleted.
+# Part 6 demonstrates this problem and provides the fix.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  containers:
+    - name: postgres
+      image: postgres:16
+      ports:
+        - containerPort: 5432
+      envFrom:
+        - secretRef:
+            name: postgres-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  # No type specified — defaults to ClusterIP.
+  # Only reachable from inside the cluster (e.g. from the api pod).
+  ports:
+    - port: 5432
+      targetPort: 5432

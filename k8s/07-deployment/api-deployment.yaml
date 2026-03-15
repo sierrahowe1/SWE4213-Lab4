@@ -1,0 +1,80 @@
+# Part 7 — Deployment
+#
+# A Deployment wraps your Pod spec in a controller that:
+#   - Maintains a desired number of replicas (self-healing)
+#   - Replaces pods that crash or are deleted
+#   - Performs rolling updates with zero downtime
+#
+# Fill in every ??? below, then apply:
+#   kubectl delete pod api --ignore-not-found
+#   kubectl apply -f k8s/07-deployment/api-deployment.yaml
+#
+# Verify:
+#   kubectl get deployments
+#   kubectl get pods
+#   kubectl rollout status deployment/api
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: ???   # Start with 1. You will scale this in the next step.
+  selector:
+    matchLabels:
+      app: ???    # Must match the labels on the Pod template below.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: ???         # Max extra pods allowed during a rolling update (try 1).
+      maxUnavailable: ???   # Max pods that can be unavailable during an update (try 0).
+  template:
+    metadata:
+      labels:
+        app: ???  # Must match selector.matchLabels above.
+    spec:
+      containers:
+        - name: api
+          image: api:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: api-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DATABASE_URL
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: API_KEY
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name   # Injects the pod's own name at runtime.
+                                             # Hit GET / several times after scaling
+                                             # to see which pod handled each request.
+          livenessProbe:
+            httpGet:
+              path: ???   # Which endpoint tells Kubernetes the pod is alive?
+              port: ???   # Which port?
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: ???   # Same endpoint — tells K8s the pod is ready to receive traffic.
+              port: ???
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "100m"       # 100 millicores — 0.1 of a CPU core.
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"

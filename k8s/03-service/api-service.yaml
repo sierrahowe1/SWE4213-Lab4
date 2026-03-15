@@ -1,0 +1,31 @@
+# Part 3 — Service
+#
+# A Service gives a Pod (or group of Pods) a stable network endpoint.
+# Without a Service the only way to reach a Pod is via its internal cluster IP,
+# which changes every time the Pod is replaced.
+#
+# Service types:
+#   ClusterIP   — reachable only inside the cluster (default)
+#   NodePort    — also reachable from your machine at localhost:<nodePort>
+#   LoadBalancer — also reachable from the internet (requires a cloud provider)
+#
+# Fill in every ??? below, then apply with:
+#   kubectl apply -f k8s/03-service/api-service.yaml
+#
+# Verify with:
+#   kubectl get services
+#   curl http://localhost:<your-nodePort>/health
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  selector:
+    app: ???        # Must match the label you set on the Pod in Part 2.
+                    # This is how the Service knows which Pods to send traffic to.
+  type: ???         # Which type exposes the service to your machine?
+  ports:
+    - port: ???         # Port the Service listens on inside the cluster.
+      targetPort: ???   # Port on the Pod to forward traffic to.
+      nodePort: ???     # Port on your machine (must be in range 30000–32767).

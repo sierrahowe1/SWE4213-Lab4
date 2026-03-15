@@ -1,0 +1,30 @@
+# Part 5 — stats-service Pod updated to consume the Secret
+#
+# Apply the same secretKeyRef pattern you used for the api pod.
+# The stats-service only needs DATABASE_URL — it has no API_KEY.
+#
+# Fill in the ??? and apply:
+#   kubectl delete pod stats-service
+#   kubectl apply -f k8s/05-secret/stats-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stats-service
+  labels:
+    app: stats-service
+spec:
+  containers:
+    - name: stats-service
+      image: stats-service:latest
+      imagePullPolicy: Never
+      ports:
+        - containerPort: 4000
+      env:
+        - name: PORT
+          value: "4000"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ???   # Which Secret contains DATABASE_URL?
+              key: ???    # What is the key name?

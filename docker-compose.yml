@@ -1,0 +1,59 @@
+services:
+  frontend:
+    image: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "4173:4173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    restart: "no"
+
+  api:
+    image: api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - LOG_LEVEL=info
+      - DATABASE_URL=postgresql://postgres:secret@postgres:5432/notesdb
+      - API_KEY=supersecret
+      - POD_NAME=docker-compose
+      - STATS_SERVICE_URL=http://stats-service:4000
+    restart: "no"
+
+  stats-service:
+    image: stats-service
+    build:
+      context: ./stats-service
+      dockerfile: Dockerfile
+    container_name: stats-service
+    environment:
+      - PORT=4000
+      - DATABASE_URL=postgresql://postgres:secret@postgres:5432/notesdb
+    restart: "no"
+    # No ports: — this service is intentionally not exposed to the host.
+    # In Docker Compose, container-name DNS (stats-service:4000) handles
+    # service-to-service calls, just like ClusterIP does in Kubernetes.
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=notesdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: "no"
+
+volumes:
+  pgdata:
