@@ -1,17 +1,20 @@
 #!/bin/bash
 # load-test.sh — hammers POST /notes to generate CPU load for the HPA demo.
-# Usage: ./load-test.sh <nodePort>
+#
+# Usage:
+#   minikube:       ./load-test.sh $(minikube service api --url)
+#   Docker Desktop: ./load-test.sh $API_URL
 #
 # In a second terminal, watch pods scale up:
 #   kubectl get pods -w
 #   kubectl get hpa -w
 
-PORT=${1:-30000}
-URL="http://localhost:$PORT/notes"
+BASE_URL=${1:-http://localhost:30000}
+URL="$BASE_URL/notes"
 CONCURRENCY=20
 DURATION=120  # seconds
 
-echo "Targeting: $URL"
+echo "Targeting: $BASE_URL"
 echo "Duration:  ${DURATION}s"
 echo "Workers:   $CONCURRENCY concurrent requests"
 echo ""

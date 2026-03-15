@@ -92,7 +92,7 @@ Four services working together:
 │   frontend Pod     │  (React + Vite — serves the UI)
 └────────────────────┘
           │
-          │  JS fetch calls to localhost:30000
+          │  JS fetch calls to http://localhost:3000 (NodePort)
           │  (browser → api NodePort directly)
           ▼
 ┌────────────────────┐
@@ -128,7 +128,7 @@ Four services working together:
 | Service         | Type        | Reachable from             | Why                                               |
 |-----------------|-------------|----------------------------|---------------------------------------------------|
 | `frontend`      | NodePort    | Browser (localhost:&lt;frontend-nodePort&gt;)  | Users need to open it in a browser                |
-| `api`           | NodePort    | Browser (localhost:30000)  | Frontend JS calls it directly from the browser    |
+| `api`           | NodePort    | Browser (`http://localhost:3000`)       | Frontend JS calls it directly from the browser    |
 | `stats-service` | ClusterIP   | Inside cluster only        | Only `api` calls it — no reason to expose it publicly |
 | `postgres`      | ClusterIP   | Inside cluster only        | Only `api` and `stats-service` need it            |
 
@@ -213,15 +213,24 @@ Notice that `stats-service` in `docker-compose.yml` has no `ports:` mapping. The
 
 A Kubernetes **cluster** consists of a **control plane** (schedules workloads, maintains desired state) and one or more **worker nodes** (run the containers). In Docker Desktop and minikube, a single machine plays both roles.
 
-Build all three Docker images before doing anything else:
+Build all three Docker images before doing anything else.
+
+> **minikube users — read this first.** minikube runs its own Docker daemon, separate from your Mac's Docker. Images built with a plain `docker build` go into the host daemon and are invisible to minikube. You must point your shell at minikube's daemon before building:
+> ```bash
+> eval $(minikube docker-env)
+> ```
+> This only affects the current terminal session. Run it again in any new terminal before building or rebuilding images.
+
+**Docker Desktop users:** no extra step needed — Kubernetes shares the same Docker daemon.
 
 ```bash
+# minikube users: run eval $(minikube docker-env) first
 docker build -t api:latest ./api
 docker build -t stats-service:latest ./stats-service
 docker build -t frontend:latest ./frontend
 ```
 
-> **Important:** The manifests use `imagePullPolicy: Never`. This tells Kubernetes to use local images instead of pulling from Docker Hub. Rebuild with `docker build` any time you change application code.
+> **Important:** The manifests use `imagePullPolicy: Never`. This tells Kubernetes to use local images instead of pulling from Docker Hub. If you see `ErrImageNeverPull`, you either forgot `eval $(minikube docker-env)` before building, or you need to rebuild after opening a new terminal.
 
 Explore your cluster:
 
@@ -321,18 +330,31 @@ kubectl apply -f k8s/03-service/api-service.yaml
 kubectl get services
 ```
 
+**Accessing services from your machine**
+
+On macOS with the minikube Docker driver, NodePort services are not directly reachable at `localhost`. The recommended approach for both minikube and Docker Desktop is `kubectl port-forward` — it works universally and always maps to `localhost`.
+
+Open a dedicated terminal and run:
+
+```bash
+# Keep this running while you work through the lab.
+kubectl port-forward svc/api 3000:3000
+```
+
+> If the port-forward stops (e.g. after a pod restart), just re-run it.
+
 Test from your machine:
 
 ```bash
-curl http://localhost:30000/
-curl http://localhost:30000/health
-curl http://localhost:30000/notes
+curl http://localhost:3000/
+curl http://localhost:3000/health
+curl http://localhost:3000/notes
 ```
 
 Create a note:
 
 ```bash
-curl -X POST http://localhost:30000/notes \
+curl -X POST http://localhost:3000/notes \
      -H "Content-Type: application/json" \
      -d '{"title":"hello","content":"my first note"}'
 ```
@@ -354,14 +376,14 @@ kubectl exec -it api -- sh
 wget -qO- http://stats-service:4000/health
 exit
 
-# Not reachable from your machine (this should fail):
-curl http://localhost:4000/stats
+# Not reachable from your machine (this should fail — that is correct behaviour):
+curl http://stats-service:4000/stats
 ```
 
 Now test the proxied stats endpoint through the api:
 
 ```bash
-curl http://localhost:30000/stats
+curl http://localhost:3000/stats
 ```
 
 The api calls `stats-service:4000/stats` internally and returns the result.
@@ -389,7 +411,7 @@ kubectl apply -f k8s/04-configmap/api-pod.yaml
 Verify `STATS_SERVICE_URL` was picked up:
 
 ```bash
-curl http://localhost:30000/stats
+curl http://localhost:3000/stats
 ```
 
 The api now reads `STATS_SERVICE_URL` from the ConfigMap instead of having it hardcoded.
@@ -442,7 +464,7 @@ Kubernetes Pods are ephemeral — data written to a container's filesystem is lo
 **Show the problem:**
 
 ```bash
-curl -X POST http://localhost:30000/notes \
+curl -X POST http://localhost:3000/notes \
      -H "Content-Type: application/json" \
      -d '{"title":"important","content":"do not lose this"}'
 
@@ -452,7 +474,7 @@ kubectl get pods -w   # wait for Running
 ```
 
 ```bash
-curl http://localhost:30000/notes   # data is gone
+curl http://localhost:3000/notes   # data is gone
 ```
 
 **The fix — PersistentVolumeClaims:**
@@ -473,7 +495,7 @@ kubectl get pods -w
 Verify persistence:
 
 ```bash
-curl -X POST http://localhost:30000/notes \
+curl -X POST http://localhost:3000/notes \
      -H "Content-Type: application/json" \
      -d '{"title":"important","content":"this should survive"}'
 
@@ -481,7 +503,7 @@ curl -X POST http://localhost:30000/notes \
 kubectl delete pod -l app=postgres
 kubectl get pods -w
 
-curl http://localhost:30000/notes   # note is still there
+curl http://localhost:3000/notes   # note is still there
 ```
 
 ---
@@ -518,7 +540,13 @@ kubectl get pods
 kubectl rollout status deployment/api
 ```
 
-Open your browser at `http://localhost:&lt;frontend-nodePort&gt;` — you should see the notes UI. Create a note and click **Refresh Stats**.
+If you haven't already, start a port-forward for the frontend (in a dedicated terminal):
+
+```bash
+kubectl port-forward svc/frontend 4173:4173
+```
+
+Open `http://localhost:4173` in a browser. You should see the notes UI. Create a note and click **Refresh Stats**.
 
 **Self-healing demo:**
 
@@ -534,7 +562,7 @@ In your first terminal, delete one of the api pods:
 kubectl delete pod <api-pod-name>
 ```
 
-Watch the second terminal — a replacement pod is created immediately. The UI at `localhost:&lt;frontend-nodePort&gt;` keeps working throughout.
+Watch the second terminal — a replacement pod is created immediately. The UI keeps working throughout.
 
 **Scaling:**
 
@@ -546,9 +574,9 @@ kubectl get pods
 Hit `GET /` several times and notice the `pod` field changing — requests are load-balanced across all three replicas:
 
 ```bash
-curl http://localhost:30000/
-curl http://localhost:30000/
-curl http://localhost:30000/
+curl http://localhost:3000/
+curl http://localhost:3000/
+curl http://localhost:3000/
 ```
 
 Scale back to 1 before Part 8:
@@ -604,13 +632,13 @@ In your first terminal, run the load test:
 
 ```bash
 chmod +x load-test.sh
-./load-test.sh 30000
+./load-test.sh http://localhost:3000
 ```
 
 Within 1–2 minutes you should see:
 - CPU climbing well above the target in `kubectl get hpa`
 - New api pods appearing in `kubectl get pods -w`
-- The notes UI at `localhost:&lt;frontend-nodePort&gt;` continuing to work throughout
+- The notes UI continuing to work throughout
 
 **Self-healing under load:**
 
