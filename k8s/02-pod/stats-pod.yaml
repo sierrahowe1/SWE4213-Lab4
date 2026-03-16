@@ -15,14 +15,14 @@ kind: Pod
 metadata:
   name: stats-service
   labels:
-    app: ???
+    app: stats-pod
 spec:
   containers:
     - name: stats-service
-      image: ???    # docker build -t stats-service:latest ./stats-service
+      image: stats-service:latest
       imagePullPolicy: Never
       ports:
-        - containerPort: ???   # Check stats-service/src/index.js.
+        - containerPort: 4000
       env:
         - name: DATABASE_URL
           value: "postgresql://postgres:secret@postgres:5432/notesdb"

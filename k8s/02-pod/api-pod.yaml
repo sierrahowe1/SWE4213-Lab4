@@ -13,15 +13,15 @@ kind: Pod
 metadata:
   name: api
   labels:
-    app: ???        # Give the Pod a label. You will need this in Part 3 to
-                    # connect a Service to this Pod via a selector.
+    app: api-pod
+
 spec:
   containers:
     - name: api
-      image: ???    # The image you built: docker build -t api:latest ./api
+      image: api:latest
       imagePullPolicy: Never
       ports:
-        - containerPort: ???   # What port does the API listen on? Check api/src/index.js.
+        - containerPort: 3000
       env:
         - name: DATABASE_URL
           value: "postgresql://postgres:secret@postgres:5432/notesdb"

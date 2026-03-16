@@ -22,9 +22,9 @@ metadata:
   name: stats-service
 spec:
   selector:
-    app: ???    # Must match the label on the stats-service Pod.
-  type: ???     # Which type makes this reachable only inside the cluster?
+    app: stats-pod # Must match the label on the stats-service Pod.
+  type: ClusterIP # Which type makes this reachable only inside the cluster?
   ports:
-    - port: ???         # Port the Service listens on inside the cluster.
-      targetPort: ???   # Port on the Pod.
+    - port: 4000 # Port the Service listens on inside the cluster.
+      targetPort: 4000 # Port on the Pod.
       # NOTE: No nodePort field — that field only applies to NodePort services.
