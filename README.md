@@ -60,7 +60,8 @@ Four services working together:
 
 | Service         | Where        | Language    | Role                                                          |
 |-----------------|--------------|-------------|---------------------------------------------------------------|
-| `frontend`      | Your machine | React + Vite | Serves the UI — calls the api from the browser               |
+| `frontend`      | Your machine | React + Vite | Serves the UI — calls the gateway from the browser           |
+| `gateway`       | Cluster      | Express.js  | Single external entry point — rate limits and proxies to api  |
 | `api`           | Cluster      | Express.js  | Notes CRUD; proxies `/stats` requests to stats-service        |
 | `stats-service` | Cluster      | Express.js  | Queries Postgres for aggregate statistics                     |
 | `postgres`      | Cluster      | Postgres 16 | Stores notes                                                  |
@@ -93,42 +94,50 @@ Four services working together:
   │  Browser + frontend (npm run dev :5173)       │
   │         │                                     │
   │         │ JS fetch → http://localhost:3000    │
-  └─────────┼───────────────────────────────────-─┘
+  └─────────┼─────────────────────────────────────┘
             │
             ▼
   ┌─────────────────────────────── Kubernetes Cluster ──────────────────────────────┐
   │                                                                                  │
-  │  ┌────────────────────┐        ┌──────────────────────────┐                     │
-  │  │    api Service     │        │  stats-service Service   │                     │
-  │  │ (type: LoadBalancer│        │  (type: ClusterIP)       │                     │
-  │  │  localhost:3000)   │        │  (internal only)         │                     │
-  │  └─────────┬──────────┘        └───────────┬──────────────┘                     │
-  │            │                               │                                     │
-  │            ▼                               ▼                                     │
-  │  ┌────────────────────┐        ┌──────────────────────────┐                     │
-  │  │     api Pod(s)     │───────►│   stats-service Pod      │                     │
-  │  └─────────┬──────────┘        └──────────────────────────┘                     │
-  │            │                                                                     │
-  │            │        ┌──────────────────────┐                                    │
-  │            └───────►│  postgres Service    │                                    │
-  │                     │  (type: ClusterIP)   │                                    │
-  │                     └──────────┬───────────┘                                    │
-  │                                │                                                 │
-  │                                ▼                                                 │
-  │                     ┌──────────────────────┐                                    │
-  │                     │    postgres Pod      │                                    │
-  │                     │    + PVC (Part 6)    │                                    │
-  │                     └──────────────────────┘                                    │
+  │  ┌─────────────────────┐                                                        │
+  │  │   gateway Service   │                                                        │
+  │  │ (type: LoadBalancer │                                                        │
+  │  │   localhost:3000)   │                                                        │
+  │  └──────────┬──────────┘                                                        │
+  │             │  rate limit + proxy                                                │
+  │             ▼                                                                    │
+  │  ┌─────────────────────┐        ┌──────────────────────────┐                   │
+  │  │    api Service      │        │  stats-service Service   │                   │
+  │  │  (type: ClusterIP)  │        │  (type: ClusterIP)       │                   │
+  │  └──────────┬──────────┘        └───────────┬──────────────┘                   │
+  │             │                               │                                    │
+  │             ▼                               ▼                                    │
+  │  ┌─────────────────────┐        ┌──────────────────────────┐                   │
+  │  │     api Pod(s)      │───────►│   stats-service Pod      │                   │
+  │  └──────────┬──────────┘        └──────────────────────────┘                   │
+  │             │                                                                    │
+  │             └───────►┌──────────────────────┐                                  │
+  │                      │  postgres Service    │                                  │
+  │                      │  (type: ClusterIP)   │                                  │
+  │                      └──────────┬───────────┘                                  │
+  │                                 ▼                                                │
+  │                      ┌──────────────────────┐                                  │
+  │                      │    postgres Pod      │                                  │
+  │                      │    + PVC (Part 6)    │                                  │
+  │                      └──────────────────────┘                                  │
   └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Service Type Summary
 
-| Service         | Type         | Reachable from              | Why                                                   |
-|-----------------|--------------|-----------------------------|-------------------------------------------------------|
-| `api`           | LoadBalancer | Browser (`http://localhost:3000`) | Frontend JS calls it directly from the browser   |
-| `stats-service` | ClusterIP    | Inside cluster only         | Only `api` calls it — no reason to expose it publicly |
-| `postgres`      | ClusterIP    | Inside cluster only         | Only `api` and `stats-service` need it                |
+| Service         | Type         | Reachable from                    | Why                                                        |
+|-----------------|--------------|-----------------------------------|------------------------------------------------------------|
+| `gateway`       | LoadBalancer | Browser (`http://localhost:3000`) | Single external entry point — rate limits before forwarding |
+| `api`           | ClusterIP    | Inside cluster only               | Only the gateway calls it — not exposed publicly (Part 9)  |
+| `stats-service` | ClusterIP    | Inside cluster only               | Only `api` calls it — no reason to expose it publicly      |
+| `postgres`      | ClusterIP    | Inside cluster only               | Only `api` and `stats-service` need it                     |
+
+> **Note:** In Parts 1–8, `api` is a `LoadBalancer` so you can test it directly with `curl`. In Part 9 it is demoted to `ClusterIP` once the gateway takes over.
 
 ---
 
