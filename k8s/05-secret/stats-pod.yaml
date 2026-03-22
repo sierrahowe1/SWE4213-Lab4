@@ -26,5 +26,5 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: ???   # Which Secret contains DATABASE_URL?
-              key: ???    # What is the key name?
+              name: postgres-secret # Which Secret contains DATABASE_URL?
+              key: DATABASE_URL # What is the key name?

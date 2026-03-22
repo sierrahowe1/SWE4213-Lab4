@@ -29,4 +29,4 @@ spec:
           value: "postgresql://postgres:secret@postgres:5432/notesdb"
       envFrom:
         - configMapRef:
-            name: ???   # Name of your ConfigMap.
+            name: api-config # Name of your ConfigMap.
