@@ -14,7 +14,7 @@ metadata:
   name: api
 spec:
   selector:
-    app: ???   # Must match the label on your api Deployment pods.
+    app: api # Must match the label on your api Deployment pods.
   type: ClusterIP
   ports:
     - port: 3000

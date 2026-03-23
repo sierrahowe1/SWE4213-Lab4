@@ -18,7 +18,7 @@ metadata:
   name: api-config
 data:
   PORT: "4000" # What port should the API listen on?
-  LOG_LEVEL: "info" # Try "info".
+  LOG_LEVEL: "debug" # Try "info".
   STATS_SERVICE_URL:
     "http://stats-service:4000" # How do you reach stats-service from inside the cluster?
     # Format: http://<service-name>:<port>

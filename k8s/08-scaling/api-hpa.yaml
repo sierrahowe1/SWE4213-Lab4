@@ -24,14 +24,15 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: ???           # Which Deployment should the HPA control?
-  minReplicas: ???      # Minimum pods when the system is idle (try 1).
-  maxReplicas: ???      # Maximum pods under heavy load (try 5).
+    name: api # Which Deployment should the HPA control?
+  minReplicas: 1 # Minimum pods when the system is idle (try 1).
+  maxReplicas: 5 # Maximum pods under heavy load (try 5).
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: ???   # Scale up when average CPU across all pods
-                                    # exceeds this percentage (try 50).
+          averageUtilization:
+            50 # Scale up when average CPU across all pods
+            # exceeds this percentage (try 50).
