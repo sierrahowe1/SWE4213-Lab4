@@ -11,14 +11,14 @@ kind: Deployment
 metadata:
   name: stats-service
 spec:
-  replicas: ???
+  replicas: 1
   selector:
     matchLabels:
-      app: ???
+      app: postgres
   template:
     metadata:
       labels:
-        app: ???
+        app: postgres
     spec:
       containers:
         - name: stats-service
@@ -36,14 +36,14 @@ spec:
                   key: DATABASE_URL
           livenessProbe:
             httpGet:
-              path: ???   # Which endpoint reports health?
-              port: ???
+              path: /health # Which endpoint reports health?
+              port: 4000
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: ???
-              port: ???
+              path: /health
+              port: 4000
             initialDelaySeconds: 3
             periodSeconds: 5
           resources:
