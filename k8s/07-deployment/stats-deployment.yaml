@@ -14,11 +14,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: stats-service
   template:
     metadata:
       labels:
-        app: postgres
+        app: stats-service
     spec:
       containers:
         - name: stats-service

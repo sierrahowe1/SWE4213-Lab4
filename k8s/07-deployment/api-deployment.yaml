@@ -22,7 +22,7 @@ spec:
   replicas: 1 # Start with 1. You will scale this in the next step.
   selector:
     matchLabels:
-      app: postgres # Must match the labels on the Pod template below.
+      app: api # Must match the labels on the Pod template below.
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -31,14 +31,14 @@ spec:
   template:
     metadata:
       labels:
-        app: postgres # Must match selector.matchLabels above.
+        app: api # Must match selector.matchLabels above.
     spec:
       containers:
         - name: api
           image: api:latest
           imagePullPolicy: Never
           ports:
-            - containerPort: 3000
+            - containerPort: 4000
           envFrom:
             - configMapRef:
                 name: api-config
@@ -63,13 +63,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /health # Which endpoint tells Kubernetes the pod is alive?
-              port: 3000 # Which port?
+              port: 4000 # Which port?
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health # Same endpoint — tells K8s the pod is ready to receive traffic.
-              port: 3000
+              port: 4000
             initialDelaySeconds: 3
             periodSeconds: 5
           resources:
